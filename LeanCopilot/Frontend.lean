@@ -69,9 +69,12 @@ If one tactic succeeds and closes the goal, we don't look at subsequent tactics.
 --      and do live updates of the widget as results come in?
 def hint (stx : Syntax) (tacStrs : Array String) (check : Bool) : TacticM Unit := do
   if check then
+    IO.println "check is true"
+    IO.println s!"tacStrs: {tacStrs}"
     let tacStxs ← tacStrs.filterMapM fun tstr : String => do match runParserCategory (← getEnv) `tactic tstr with
       | Except.error _ => return none
       | Except.ok stx => return some (tstr, stx)
+    IO.println s!"tacStxs: {tacStxs}"
     let tacs := Nondet.ofList tacStxs.toList
     let results := tacs.filterMapM fun t : (String × Syntax) => do
       if let some msgs ← observing? (withMessageLog (withoutInfoTrees (evalTactic t.2))) then
@@ -86,5 +89,6 @@ def hint (stx : Syntax) (tacStrs : Array String) (check : Bool) : TacticM Unit :
       setMCtx r.2.term.meta.meta.mctx
     | none => admitGoal (← getMainGoal)
   else
+    IO.println "check is false"
     let tacsNoCheck : Array Suggestion := tacStrs.map fun tac => { suggestion := SuggestionText.string tac }
     addSuggestions stx tacsNoCheck

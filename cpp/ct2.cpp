@@ -12,6 +12,14 @@
 #include <stdexcept>
 #include <vector>
 
+#include <exception>
+#include <iostream>
+
+#include <signal.h>
+#include <backtrace.h>
+#include <execinfo.h>
+#include <unistd.h>
+
 #include "json.hpp"
 #include "npy.hpp"
 
@@ -69,30 +77,54 @@ bool init_model(b_lean_obj_arg _name,          // String
                 b_lean_obj_arg _device,        // String
                 b_lean_obj_arg _device_index,  // Array UInt64
                 std::map<std::string, std::unique_ptr<T>> &models) {
+  std::cout << "inside init_model" << std::endl;
   std::string name = std::string(lean_string_cstr(_name));
+  std::cout << "name: " << name << std::endl;
   if (is_initialized_aux<T>(name)) {
+    std::cout << "name already exists" << std::endl;
     throw std::runtime_error(name + " already exists.");
   }
 
   std::string model_path = std::string(lean_string_cstr(_model_path));
+  std::cout << "model_path: " << model_path << std::endl;
   if (!exists(model_path)) {  // Cannot find the model.
+    std::cout << "model_path does not exist" << std::endl;
     return false;
   }
 
   ctranslate2::Device device =
       ctranslate2::str_to_device(lean_string_cstr(_device));
+
+  std::cout << "device: " << lean_string_cstr(_device) << std::endl;
+
   ctranslate2::ComputeType compute_type =
       ctranslate2::str_to_compute_type(lean_string_cstr(_compute_type));
 
+  
+  std::cout << "compute_type: " << lean_string_cstr(_compute_type) << std::endl;
+
   std::vector<int> device_indices;
   const lean_array_object *p_arr = lean_to_array(_device_index);
+  std::cout << "device_index size: " << p_arr->m_size << std::endl;
   for (int i = 0; i < p_arr->m_size; i++) {
+    std::cout << "pushing device index" << std::endl;
+    std::cout << "inside stuff: " << p_arr->m_data[i] << std::endl;
+    uint64_t test = 0;
+    lean_object* zero = lean_box_uint64(test);
+    std::cout << "testing unbox: " << lean_unbox_uint64(zero) << std::endl;
+    std::cout << lean_unbox_uint64(p_arr->m_data[i]) << std::endl;
     device_indices.push_back(lean_unbox_uint64(p_arr->m_data[i]));
   }
 
+  std::cout << "pushed all device indices" << std::endl;
+
   auto p_model =
       std::make_unique<T>(model_path, device, compute_type, device_indices);
+
+  std::cout << "created model" << std::endl;
   models.emplace(name, std::move(p_model));
+
+  std::cout << "inserted model" << std::endl;
   return true;
 }
 
@@ -102,6 +134,7 @@ extern "C" uint8_t init_generator(
     b_lean_obj_arg _compute_type,    // String
     b_lean_obj_arg _device,          // String
     b_lean_obj_arg _device_index) {  // Array UInt64
+  std::cout << "inside init_generator" << std::endl;
   return init_model(_name, _model_path, _compute_type, _device, _device_index,
                     generators);
 }
@@ -124,6 +157,27 @@ inline std::vector<std::string> convert_tokens(b_lean_obj_arg _tokens) {
   return tokens;
 }
 
+// void custom_terminate() {
+//     std::cerr << "terminate called" << std::endl;
+//     abort();
+// }
+
+void signal_handler(int signum) {
+    std::cerr << "NEW: Caught signal " << signum << std::endl;
+    void *array[10];
+    size_t size = backtrace(array, 10);
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    exit(signum);
+}
+
+void segfault_handler(int sig) {
+    void *array[50];
+    size_t size = backtrace(array, 50);
+    fprintf(stderr, "Error: signal %d:\n", sig);
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    exit(1);
+}
+
 extern "C" lean_obj_res generate(
     b_lean_obj_arg _name,                  // String
     b_lean_obj_arg _input_tokens,          // Array String
@@ -136,69 +190,274 @@ extern "C" lean_obj_res generate(
     double patience,                       // Float
     double temperature) {                  // Float
   // Check the arguments.
-  std::string name = std::string(lean_string_cstr(_name));
-  if (!is_initialized_aux<ctranslate2::Translator>(name)) {
-    throw std::runtime_error(name + " hasn't been initialized.");
-  }
-  if (num_return_sequences <= 0) {
-    throw std::invalid_argument("num_return_sequences must be positive.");
-  }
-  if (beam_size <= 0) {
-    throw std::invalid_argument("beam_size must be positive.");
-  }
-  if (min_length < 0 || max_length < 0 || min_length > max_length) {
-    throw std::invalid_argument("Invalid min_length or max_length.");
-  }
-  if (patience < 1.0) {
-    throw std::invalid_argument("patience must be at least 1.0.");
-  }
-  if (temperature <= 0) {
-    throw std::invalid_argument("temperature must be positive.");
-  }
+  std::cout << "inside generate function" << std::endl;
+  std::ofstream debug_log("lean_ffi_debug.log", std::ios_base::app);
+  // TODO: uncomment all of below to bring back code to test
+  // try {
+  //   // std::set_terminate([]() {
+  //   //   try {
+  //   //     std::exception_ptr current_exception = std::current_exception();
+  //   //     if (current_exception) {
+  //   //       std::rethrow_exception(current_exception);
+  //   //     }
+  //   //   } catch (const std::exception& e) {
+  //   //     std::cerr << "Unhandled exception in thread: " << e.what() << std::endl;
+  //   //   } catch (...) {
+  //   //     std::cerr << "Unknown exception caught" << std::endl;
+  //   //   }
+  //   //   std::abort();
+  //   // });
+  //   // std::set_terminate(custom_terminate);
+  //   signal(SIGSEGV, segfault_handler);
+  //   signal(SIGABRT, signal_handler);
+  //   debug_log << "Entered generate function" << std::endl;
+  //   std::cout << "Entered generate function" << std::endl;
 
-  // Set beam search's hyperparameters.
-  ctranslate2::TranslationOptions opts;
-  opts.num_hypotheses = num_return_sequences;
-  opts.beam_size = beam_size;
-  opts.patience = patience;
-  opts.length_penalty = length_penalty;
-  opts.min_decoding_length = min_length;
-  opts.max_decoding_length = max_length;
-  opts.sampling_temperature = temperature;
-  opts.sampling_topk = 0;
-  opts.sampling_topp = 1.0;
-  opts.max_input_length = 0;
-  opts.use_vmap = true;
-  opts.disable_unk = true;
-  opts.return_scores = true;
+  //   // Log input parameters
+  //   debug_log << "num_return_sequences: " << num_return_sequences << std::endl;
+  //   std::cout << "num_return_sequences: " << num_return_sequences << std::endl;
+  //   debug_log << "beam_size: " << beam_size << std::endl;
+  //   std::cout << "beam_size: " << beam_size << std::endl;
+  //   debug_log << "min_length: " << min_length << std::endl;
+  //   std::cout << "min_length: " << min_length << std::endl;
+  //   debug_log << "max_length: " << max_length << std::endl;
+  //   std::cout << "max_length: " << max_length << std::endl;
+  //   debug_log << "length_penalty: " << length_penalty << std::endl;
+  //   std::cout << "length_penalty: " << length_penalty << std::endl;
+  //   debug_log << "patience: " << patience << std::endl;
+  //   std::cout << "patience: " << patience << std::endl;
+  //   debug_log << "temperature: " << temperature << std::endl;
+  //   std::cout << "temperature: " << temperature << std::endl;
+  //   std::string name = std::string(lean_string_cstr(_name));
+  //   std::cout << "name: " << name << std::endl;
+  //   if (!is_initialized_aux<ctranslate2::Translator>(name)) {
+  //     // throw std::runtime_error(name + " hasn't been initialized.");
+  //     debug_log << "Model not initialized" << std::endl;
+  //     std::cout << "Model not initialized" << std::endl;
+  //   }
+  //   if (num_return_sequences <= 0) {
+  //     std::cout << "num_return_sequences must be positive." << std::endl;
+  //     throw std::invalid_argument("num_return_sequences must be positive.");
+  //   }
+  //   if (beam_size <= 0) {
+  //     std::cout << "beam_size must be positive." << std::endl;
+  //     throw std::invalid_argument("beam_size must be positive.");
+  //   }
+  //   if (min_length < 0 || max_length < 0 || min_length > max_length) {
+  //     std::cout << "Invalid min_length or max_length." << std::endl;
+  //     throw std::invalid_argument("Invalid min_length or max_length.");
+  //   }
+  //   if (patience < 1.0) {
+  //     std::cout << "patience must be at least 1.0." << std::endl;
+  //     throw std::invalid_argument("patience must be at least 1.0.");
+  //   }
+  //   if (temperature <= 0) {
+  //     std::cout << "temperature must be positive." << std::endl;
+  //     throw std::invalid_argument("temperature must be positive.");
+  //   }
 
-  // Get the input tokens ready.
-  std::vector<std::string> input_tokens = convert_tokens(_input_tokens);
-  std::vector<std::string> target_prefix_tokens =
-      convert_tokens(_target_prefix_tokens);
+  //   // Set beam search's hyperparameters.
+  //   ctranslate2::TranslationOptions opts;
+  //   opts.num_hypotheses = num_return_sequences;
+  //   opts.beam_size = beam_size;
+  //   opts.patience = patience;
+  //   opts.length_penalty = length_penalty;
+  //   opts.min_decoding_length = min_length;
+  //   opts.max_decoding_length = max_length;
+  //   opts.sampling_temperature = temperature;
+  //   opts.sampling_topk = 0;
+  //   opts.sampling_topp = 1.0;
+  //   opts.max_input_length = 0;
+  //   opts.use_vmap = true;
+  //   opts.disable_unk = true;
+  //   opts.return_scores = true;
 
-  // Generate tactics with beam search.
-  ctranslate2::TranslationResult results = generators.at(name)->translate_batch(
-      {input_tokens}, {target_prefix_tokens}, opts)[0];
-  assert(results.hypotheses.size() == num_return_sequences &&
-         results.scores.size() == num_return_sequences);
+  //   // Get the input tokens ready.
+  //   std::vector<std::string> input_tokens = convert_tokens(_input_tokens);
+  //   std::cout << "input tokens size: " << input_tokens.size() << std::endl;
+  //   std::vector<std::string> target_prefix_tokens =
+  //       convert_tokens(_target_prefix_tokens);
+  //   std::cout << "target prefix tokens size: " << target_prefix_tokens.size() << std::endl;
 
-  // Return the output.
-  lean_object *output = lean_mk_empty_array();
+  //   // Generate tactics with beam search.
+  //   debug_log << "About to generate tactics with beam search" << std::endl;
+  //   debug_log << "model name: " << name << std::endl;
+  //   debug_log << "input tokens: " << input_tokens.size() << std::endl;
+  //   std::cout << "input tokens: " << std::endl;
+  //   for (const auto& token : input_tokens) {
+  //     std::cout << token << " ";
+  //     debug_log << token << " ";
+  //   }
+  //   std::cout << std::endl;
 
-  for (int i = 0; i < num_return_sequences; i++) {
-    int l = results.hypotheses[i].size();
+  //   std::cout << "as hex" << std::endl;
+  //   for (const auto& token : input_tokens) {
+  //     debug_log << "Token: ";
+  //     std::cout << "Token: ";
+  //     for (unsigned char c : token) {
+  //       std::cout << std::hex << (int)c << " ";
+  //       debug_log << std::hex << (int)c << " ";
+  //     }
+  //     std::cout << std::endl;
+  //     debug_log << std::endl;
+  //   }
 
-    lean_object *tokens = lean_mk_empty_array();
-    for (int j = 0; j < l; j++) {
-      tokens = lean_array_push(
-          tokens, lean_mk_string(results.hypotheses[i][j].c_str()));
+  //   if (target_prefix_tokens.empty()) {
+  //     debug_log << "target prefix tokens empty" << std::endl;
+  //     std::cout << "target prefix tokens empty" << std::endl;
+  //     target_prefix_tokens.push_back("<pad>");
+  //   }
+  //   debug_log << "target prefix tokens: " << target_prefix_tokens.size() << std::endl;
+  //   std::cout << "target prefix tokens size: " << target_prefix_tokens.size() << std::endl;
+  //   debug_log << "opts: " << opts.num_hypotheses << " " << opts.beam_size << " " << opts.patience << " " << opts.length_penalty << " " << opts.min_decoding_length << " " << opts.max_decoding_length << " " << opts.sampling_temperature << " " << opts.sampling_topk << " " << opts.sampling_topp << " " << opts.max_input_length << " " << opts.use_vmap << " " << opts.disable_unk << " " << opts.return_scores << std::endl;
+  //   std::cout << "opts: " << opts.num_hypotheses << " " << opts.beam_size << " " << opts.patience << " " << opts.length_penalty << " " << opts.min_decoding_length << " " << opts.max_decoding_length << " " << opts.sampling_temperature << " " << opts.sampling_topk << " " << opts.sampling_topp << " " << opts.max_input_length << " " << opts.use_vmap << " " << opts.disable_unk << " " << opts.return_scores << std::endl;
+  //   std::unique_ptr<ctranslate2::Translator> generator = std::move(generators.at(name));
+  //   std::cout << "moved generator" << std::endl;
+  //   // std::vector<ctranslate2::TranslationResult> results = generator->translate_batch(
+  //   //     {input_tokens}, {target_prefix_tokens}, opts);
+
+  //   // TODO: rmeoce after testing
+  //   std::vector<std::vector<std::string>> batch = {input_tokens};
+  //   std::cout << "batch size: " << batch.size() << std::endl;
+  //   if (!target_prefix_tokens.empty()) {
+  //     std::cout << "target prefix tokens not empty" << std::endl;
+  //     batch.push_back(target_prefix_tokens);
+  //   }
+  //   std::cout << "new batch size: " << batch.size() << std::endl;
+  //   std::cout << "first sequence length: " << batch[0].size() << std::endl;
+  //   debug_log << "About to call translate_batch" << std::endl;
+  //   debug_log << "Batch size: " << batch.size() << std::endl;
+  //   debug_log << "First sequence length: " << batch[0].size() << std::endl;
+
+  //   try {
+  //     if (!generator) {
+  //       debug_log << "Error: generator is null" << std::endl;
+  //       std::cout << "Error: generator is null" << std::endl;
+  //       // Handle error...
+  //     }
+  //     // debug_log << "About to call translate_batch" << std::endl;
+  //     std::cout << "about to call translate_batch" << std::endl;
+  //     ctranslate2::Translator& deref_generator = *generator;
+  //     std::cout << "dereferenced generator" << std::endl;
+  //     deref_generator.translate_batch(batch, opts);
+  //     std::cout << "translation completed successfully" << std::endl;
+  //     std::vector<ctranslate2::TranslationResult> results = generator->translate_batch(batch, opts);
+  //     // std::vector<ctranslate2::TranslationResult> results = generator->translate_batch(
+  //     //     {input_tokens}, {target_prefix_tokens}, opts);
+  //     std::cout << "Translation completed successfully" << std::endl;
+  //     debug_log << "Translation completed successfully" << std::endl;
+  //     debug_log << "Number of results: " << results.size() << std::endl;
+  //     if (results.empty()) {
+  //         debug_log << "No results returned" << std::endl;
+  //     }
+
+
+  //     const auto& firstResult = results[0];
+  //     debug_log << "First result tokens: ";
+  //     for (const auto& token : firstResult.output()) {
+  //         debug_log << token << " ";
+  //     }
+  //     debug_log << std::endl;
+
+  //     // Process results...
+  //   } catch (const std::exception& e) {
+  //     debug_log << "Exception caught: " << e.what() << std::endl;
+  //     // Handle the error...
+  //   } catch (...) {
+  //     debug_log << "Unknown exception caught" << std::endl;
+  //   }
+
+  //   // ctranslate2::TranslationResult results = generator->translate_batch(
+  //   //     {input_tokens}, {target_prefix_tokens}, opts)[0];
+
+  //   // ctranslate2::TranslationResult results = generators.at(name)->translate_batch(
+  //   //     {input_tokens}, {target_prefix_tokens}, opts)[0];
+  //   // assert(results.hypotheses.size() == num_return_sequences &&
+  //   //        results.scores.size() == num_return_sequences);
+
+  //   // // Return the output.
+  //   // lean_object *output = lean_mk_empty_array();
+
+  //   // try {
+  //   //   for (size_t i = 0; i < num_return_sequences; i++) {
+  //   //     lean_object *tokens = lean_mk_empty_array();
+  //   //     for (const auto& token : results.hypotheses[i]) {
+  //   //       tokens = lean_array_push(tokens, lean_mk_string(token.c_str()));
+  //   //     }
+  //   //     output = lean_array_push(output, lean_mk_pair(tokens, lean_box_float(std::exp(results.scores[i]))));
+  //   //   }
+  //   // } catch (const std::exception& e) {
+  //   //   std::cerr << "Exception in generating tactics: " << e.what() << std::endl;
+  //   //   return lean_box(0); // Returning an empty box on error.
+  //   // }
+
+  //   // works but panic
+  //   // lean_object* output = lean_mk_empty_array();
+  //   // lean_object* tokens = lean_mk_empty_array();
+  //   // tokens = lean_array_push(tokens, lean_mk_string("test"));
+  //   // double score = 0.5;
+  //   // output = lean_array_push(output, lean_mk_pair(tokens, lean_box_float(score)));
+
+  //   lean_object* output = lean_mk_empty_array();
+
+  //   const char* tactics[] = {
+  //     "rw [add_comm]",
+  //     "simp",
+  //     "apply eq_comm",
+  //     "ring"
+  //   };
+  //   int num_tactics = sizeof(tactics) / sizeof(tactics[0]);
+
+  //   for (int i = 0; i < num_tactics; ++i) {
+  //     lean_object* tokens = lean_mk_empty_array();
+  //     for (const char* c = tactics[i]; *c; ++c) {
+  //       char byte_str[2] = {*c, '\0'};
+  //       tokens = lean_array_push(tokens, lean_mk_string(byte_str));
+  //     }
+  //     double score = 1.0 - (0.1 * i);  // Decreasing scores
+  //     output = lean_array_push(output, lean_mk_pair(tokens, lean_box_float(score)));
+  //   }
+
+  //   debug_log << "Created output array with " << lean_array_size(output) << " elements" << std::endl;
+  //   debug_log << "Exiting generate function" << std::endl;
+  //   debug_log.close();
+
+  //   return output;
+  // } catch (const std::exception& e) {
+  //   debug_log << "Top-level exception caught: " << e.what() << std::endl;
+  //   lean_object* output = lean_mk_empty_array();
+  //   return output;
+  //   // Handle the error, perhaps return an error object to Lean
+  // } catch (...) {
+  //   debug_log << "Unknown top-level exception caught" << std::endl;
+  //   lean_object* output = lean_mk_empty_array();
+  //   return output;
+  //   // Handle unknown exceptions
+  // }
+
+  lean_object* output = lean_mk_empty_array();
+
+  const char* tactics[] = {
+    "rw [add_comm]",
+    "simp",
+    "apply eq_comm",
+    "ring"
+  };
+  int num_tactics = sizeof(tactics) / sizeof(tactics[0]);
+
+  for (int i = 0; i < num_tactics; ++i) {
+    lean_object* tokens = lean_mk_empty_array();
+    for (const char* c = tactics[i]; *c; ++c) {
+      char byte_str[2] = {*c, '\0'};
+      tokens = lean_array_push(tokens, lean_mk_string(byte_str));
     }
-    double score = std::exp(results.scores[i]);
-    assert(0.0 <= score && score <= 1.0);
-    output =
-        lean_array_push(output, lean_mk_pair(tokens, lean_box_float(score)));
+    double score = 1.0 - (0.1 * i);  // Decreasing scores
+    output = lean_array_push(output, lean_mk_pair(tokens, lean_box_float(score)));
   }
+
+  debug_log << "Created output array with " << lean_array_size(output) << " elements" << std::endl;
+  debug_log << "Exiting generate function" << std::endl;
+  debug_log.close();
 
   return output;
 }

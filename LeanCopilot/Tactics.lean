@@ -3,6 +3,7 @@ import LeanCopilot.Options
 import LeanCopilot.Frontend
 import Aesop.Util.Basic
 import Batteries.Data.String.Basic
+import Init.System.IO
 
 open Lean Meta Parser Elab Term Tactic
 
@@ -35,6 +36,7 @@ open SuggestTactics in
 Generate a list of tactic suggestions.
 -/
 def suggestTactics (targetPrefix : String) : TacticM (Array (String × Float)) := do
+  IO.println s!"Inside suggestTactics"
   let state ← getPpTacticState
   let nm ← getGeneratorName
   let model ← getGenerator nm
@@ -53,12 +55,17 @@ def suggestTactics (targetPrefix : String) : TacticM (Array (String × Float)) :
       let isAesop := t == "aesop"
       let isSelfReference := ¬ (theoremName == "") ∧ (theoremNameMatcher.find? t |>.isSome)
       if isSelfReference ∨ isAesop then none else some (t, s)
+    IO.println "About to return filtered suggestions inside if"
+    IO.println filteredSuggestions
     return filteredSuggestions
   else
     let filteredSuggestions := suggestions.filterMap fun ((t, s) : String × Float) =>
       let isAesop := t == "aesop"
       if isAesop then none else some (t, s)
+    IO.println "About to return filtered suggestions outside if"
+    IO.println filteredSuggestions
     return filteredSuggestions
+  -- return #[]
 
 
 /--
@@ -110,6 +117,23 @@ Retrieve a list of premises using the current pretty-printed tactic state as the
 def selectPremises : TacticM (Array PremiseInfo) := do
   retrieve (← getPpTacticState)
 
+structure StatusResponse where
+  completed : Bool
+deriving FromJson
+
+def get (url : String) : IO StatusResponse := do
+  let out ← IO.Process.output {
+    cmd := "curl"
+    args := #["-X", "GET", url, "-H", "accept: application/json", "-H", "Content-Type: application/json"]
+  }
+  IO.println s!"Raw output: {out.stdout}"
+  if out.exitCode != 0 then
+     throw $ IO.userError s!"Request failed. Please check if the server is up at `{url}`."
+  let some json := Json.parse out.stdout |>.toOption
+    | throw $ IO.userError "Failed to parse response 1"
+  let some res := (fromJson? json : Except String StatusResponse) |>.toOption
+    | throw $ IO.userError "Failed to parse response 2"
+  return res
 
 syntax "pp_state" : tactic
 syntax "suggest_tactics" : tactic
@@ -127,15 +151,31 @@ elab_rules : tactic
     logInfo state
 
   | `(tactic | suggest_tactics%$tac $pfx:str) => do
-    let (tacticsWithScores, elapsed) ← Aesop.time $ suggestTactics pfx.getString
-    if ← isVerbose then
-      logInfo s!"{elapsed.printAsMillis} for generating {tacticsWithScores.size} tactics"
-    let tactics := tacticsWithScores.map (·.1)
-    if ← isVerbose then
-      logInfo s!"Tactics: {tactics}"
-    let range : String.Range := { start := tac.getRange?.get!.start, stop := pfx.raw.getRange?.get!.stop }
-    let ref := Syntax.ofRange range
-    hint ref tactics (← SuggestTactics.checkTactics)
+    IO.println s!"Inside suggest_tactics"
+    IO.println s!"Prefix: {pfx.getString}"
+
+    -- Check the status of progressive training
+    -- TODO: make new function
+    -- TODO: do this for proof and retrieve premise too
+    IO.println "Asking for status"
+    let url := "http://127.0.0.1:8000/check-status/"
+    let result ← get url
+    IO.println s!"API call result: {result.completed}"
+
+    -- let (tacticsWithScores, elapsed) ← Aesop.time $ suggestTactics pfx.getString
+    -- IO.println s!"Elapsed time: {elapsed.printAsMillis}"
+    -- if ← isVerbose then
+    --   logInfo s!"{elapsed.printAsMillis} for generating {tacticsWithScores.size} tactics"
+    -- let tactics := tacticsWithScores.map (·.1)
+    -- IO.println tactics
+    -- if ← isVerbose then
+    --   logInfo s!"Tactics: {tactics}"
+    -- let range : String.Range := { start := tac.getRange?.get!.start, stop := pfx.raw.getRange?.get!.stop }
+    -- IO.println "Got range as string"
+    -- let ref := Syntax.ofRange range
+    -- IO.println "Got range as syntax"
+    -- hint ref tactics (← SuggestTactics.checkTactics)
+    -- IO.println "Hinted"
 
   | `(tactic | select_premises) => do
     let premisesWithInfoAndScores ← selectPremises
