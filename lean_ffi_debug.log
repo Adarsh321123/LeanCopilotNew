@@ -2972,3 +2972,422 @@ Created output array with 4 elements
 Exiting generate function
 Created output array with 4 elements
 Exiting generate function
+Created output array with 4 elements
+Exiting generate function
+Created output array with 4 elements
+Exiting generate function
+Created output array with 4 elements
+Exiting generate function
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Entered generate function
+num_return_sequences: 1
+beam_size: 5
+min_length: 1
+max_length: 100
+length_penalty: 1
+patience: 1
+temperature: 1
+About to generate tactics with beam search
+model name: ct2-leandojo-lean4-tacgen-byt5-small
+input tokens: 17
+a b c : Nat ⊢ a + b + c = a + c + b Token: 61 
+Token: 62 
+Token: 63 
+Token: 3a 
+Token: 4e 61 74 
+Token: e2 8a a2 
+Token: 61 
+Token: 2b 
+Token: 62 
+Token: 2b 
+Token: 63 
+Token: 3d 
+Token: 61 
+Token: 2b 
+Token: 63 
+Token: 2b 
+Token: 62 
+target prefix tokens empty
+target prefix tokens: 1
+opts: 1 5 1 1 1 64 1 0 1 0 1 1 1
+About to call translate_batch
+Batch size: 2
+First sequence length: 11
+Translation completed successfully
+Number of results: 2
+First result tokens: h a v e   h a b c   : =   a b c . d e s t a b l e c t a b l e a b c 
+Created output array with 4 elements
+Exiting generate function

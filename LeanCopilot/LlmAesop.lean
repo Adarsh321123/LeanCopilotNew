@@ -12,7 +12,7 @@ namespace LeanCopilot
 
 def tacGen : Aesop.TacGen := fun (mvarId : MVarId) => do
   let state ← ppTacticState [mvarId]
-  let nm ← SuggestTactics.getGeneratorName
+  let nm ← SuggestTactics.getCurrentGeneratorNameIO
   let model ← getGenerator nm
   let suggestions ← generate model state ""
   -- A temporary workaround to prevent the tactic from using the current theorem.

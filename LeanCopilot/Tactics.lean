@@ -4,6 +4,11 @@ import LeanCopilot.Frontend
 import Aesop.Util.Basic
 import Batteries.Data.String.Basic
 import Init.System.IO
+import LeanCopilot.Models.Native
+import LeanCopilot.Models.Registry
+import LeanCopilot.Models.Builtin
+import LeanCopilot.Models.ByT5
+import ModelCheckpointManager.Main
 
 open Lean Meta Parser Elab Term Tactic
 
@@ -38,34 +43,35 @@ Generate a list of tactic suggestions.
 def suggestTactics (targetPrefix : String) : TacticM (Array (String × Float)) := do
   IO.println s!"Inside suggestTactics"
   let state ← getPpTacticState
-  let nm ← getGeneratorName
+  let nm ← getCurrentGeneratorNameIO
+  IO.println s!"Current generator name: {nm}"
   let model ← getGenerator nm
-  let suggestions ← generate model state targetPrefix
-  -- A temporary workaround to prevent the tactic from using the current theorem.
-  -- TODO: Use a more principled way, e.g., see `Lean4Repl.lean` in `LeanDojo`.
-  if let some declName ← getDeclName? then
-    let theoremName := match declName.toString with
-      | "_example" => ""
-      | n => n.splitOn "." |>.getLast!
-    let theoremNameMatcher := String.Matcher.ofString theoremName
-    if ← isVerbose then
-      logInfo s!"State:\n{state}"
-      logInfo s!"Theorem name:\n{theoremName}"
-    let filteredSuggestions := suggestions.filterMap fun ((t, s) : String × Float) =>
-      let isAesop := t == "aesop"
-      let isSelfReference := ¬ (theoremName == "") ∧ (theoremNameMatcher.find? t |>.isSome)
-      if isSelfReference ∨ isAesop then none else some (t, s)
-    IO.println "About to return filtered suggestions inside if"
-    IO.println filteredSuggestions
-    return filteredSuggestions
-  else
-    let filteredSuggestions := suggestions.filterMap fun ((t, s) : String × Float) =>
-      let isAesop := t == "aesop"
-      if isAesop then none else some (t, s)
-    IO.println "About to return filtered suggestions outside if"
-    IO.println filteredSuggestions
-    return filteredSuggestions
-  -- return #[]
+  -- let suggestions ← generate model state targetPrefix
+  -- -- A temporary workaround to prevent the tactic from using the current theorem.
+  -- -- TODO: Use a more principled way, e.g., see `Lean4Repl.lean` in `LeanDojo`.
+  -- if let some declName ← getDeclName? then
+  --   let theoremName := match declName.toString with
+  --     | "_example" => ""
+  --     | n => n.splitOn "." |>.getLast!
+  --   let theoremNameMatcher := String.Matcher.ofString theoremName
+  --   if ← isVerbose then
+  --     logInfo s!"State:\n{state}"
+  --     logInfo s!"Theorem name:\n{theoremName}"
+  --   let filteredSuggestions := suggestions.filterMap fun ((t, s) : String × Float) =>
+  --     let isAesop := t == "aesop"
+  --     let isSelfReference := ¬ (theoremName == "") ∧ (theoremNameMatcher.find? t |>.isSome)
+  --     if isSelfReference ∨ isAesop then none else some (t, s)
+  --   IO.println "About to return filtered suggestions inside if"
+  --   IO.println filteredSuggestions
+  --   return filteredSuggestions
+  -- else
+  --   let filteredSuggestions := suggestions.filterMap fun ((t, s) : String × Float) =>
+  --     let isAesop := t == "aesop"
+  --     if isAesop then none else some (t, s)
+  --   IO.println "About to return filtered suggestions outside if"
+  --   IO.println filteredSuggestions
+  --   return filteredSuggestions
+  return #[]
 
 
 /--
@@ -135,6 +141,8 @@ def get (url : String) : IO StatusResponse := do
     | throw $ IO.userError "Failed to parse response 2"
   return res
 
+def newModelUrl := "https://huggingface.co/new-model-url3"
+
 syntax "pp_state" : tactic
 syntax "suggest_tactics" : tactic
 syntax "suggest_tactics" str : tactic
@@ -161,9 +169,18 @@ elab_rules : tactic
     let url := "http://127.0.0.1:8000/check-status/"
     let result ← get url
     IO.println s!"API call result: {result.completed}"
+    -- If the status is completed, update the model LeanCopilot uses
+    -- TODO: uncomment
+    -- if result.completed then
+    IO.println "Status completed. Using new model..."
+    addModelUrl newModelUrl
+    IO.println "Added new model"
 
-    -- let (tacticsWithScores, elapsed) ← Aesop.time $ suggestTactics pfx.getString
-    -- IO.println s!"Elapsed time: {elapsed.printAsMillis}"
+    -- TODO: must call lake exe LeanCopilot/download to download the new model before suggesitng
+
+
+    let (tacticsWithScores, elapsed) ← Aesop.time $ suggestTactics pfx.getString
+    IO.println s!"Elapsed time: {elapsed.printAsMillis}"
     -- if ← isVerbose then
     --   logInfo s!"{elapsed.printAsMillis} for generating {tacticsWithScores.size} tactics"
     -- let tactics := tacticsWithScores.map (·.1)

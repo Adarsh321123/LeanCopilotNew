@@ -2,10 +2,15 @@ import ModelCheckpointManager.Url
 import ModelCheckpointManager.Download
 import Init.System.IO
 import Lean
+import LeanCopilot.Models.Builtin
 
 open Lean
 open LeanCopilot
 
+-- Define a mutable reference to store additional URLs
+initialize additionalModelUrlsRef : IO.Ref (List String) ← IO.mkRef []
+
+initialize currentModelRef : IO.Ref String ← IO.mkRef Builtin.generator.name
 
 def builtinModelUrls : List String := [
   "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-tacgen-byt5-small",
@@ -13,6 +18,26 @@ def builtinModelUrls : List String := [
   "https://huggingface.co/kaiyuy/premise-embeddings-leandojo-lean4-retriever-byt5-small",
   "https://huggingface.co/kaiyuy/ct2-byt5-small"
 ]
+
+-- Function to add a new URL to the additional URLs list
+def addModelUrl (url : String) : IO Unit := do
+  IO.println "Adding new generator url"
+  additionalModelUrlsRef.modify (url :: ·)
+  let url := Url.parse! url
+
+  IO.println "Registering new generator"
+  -- Re-register the option with the new URL
+  -- Lean.registerOption `LeanCopilot.suggest_tactics.model {
+  --   defValue := url.name!
+  -- }
+  currentModelRef.set url.name!
+
+def getCurrentModel : IO String := currentModelRef.get
+
+-- Function to get all model URLs (built-in + additional)
+def getAllModelUrls : IO (List String) := do
+  let additional ← additionalModelUrlsRef.get
+  return builtinModelUrls ++ additional
 
 structure Request where
   text : String
@@ -39,16 +64,17 @@ def send {α β : Type} [ToJson α] [FromJson β] (req : α) (url : String) : IO
   return res
 
 def main (args : List String) : IO Unit := do
-  -- let mut tasks := #[]
-  -- let urls := Url.parse! <$> (if args.isEmpty then builtinModelUrls else args)
+  let mut tasks := #[]
+  let urls ← if args.isEmpty then getAllModelUrls else pure args
+  let parsedUrls := Url.parse! <$> urls
 
-  -- for url in urls do
-  --   tasks := tasks.push $ ← IO.asTask $ downloadUnlessUpToDate url
+  for url in parsedUrls do
+    tasks := tasks.push $ ← IO.asTask $ downloadUnlessUpToDate url
 
-  -- for t in tasks do
-  --   match ← IO.wait t with
-  --   | Except.error e => throw e
-  --   | Except.ok _ => pure ()
+  for t in tasks do
+    match ← IO.wait t with
+    | Except.error e => throw e
+    | Except.ok _ => pure ()
 
   -- Start progressive training with the initial repository
   -- TODO: ask for url somehow
