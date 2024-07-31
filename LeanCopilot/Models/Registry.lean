@@ -92,6 +92,7 @@ def getGenerator (name : String) : Lean.CoreM Generator := do
   | some (.native model) =>
     if ¬(← isUpToDate model.url) then
       Lean.logWarning s!"The local model {model.name} is not up to date. You may want to run `lake exe LeanCopilot/download` to re-download it."
+    IO.println "Inside getGenerator and foind native model"
     return .native model
   | some descr => return descr
   | none => throwError s!"unknown generator: {name}"
@@ -105,6 +106,7 @@ def getEncoder (name : String) : IO Encoder := do
 
 
 def registerGenerator (name : String) (model : Generator) := do
+  IO.println s!"inside register generator, name is {name}"
   let mr ← getModelRegistry
   modelRegistryRef.modify fun _ =>
     {mr with generators := mr.generators.insert name model}

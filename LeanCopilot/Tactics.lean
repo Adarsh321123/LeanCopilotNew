@@ -141,7 +141,7 @@ def get (url : String) : IO StatusResponse := do
     | throw $ IO.userError "Failed to parse response 2"
   return res
 
-def newModelUrl := "https://huggingface.co/new-model-url3"
+def newModelUrl := "https://huggingface.co/kaiyuy/leandojo-lean4-tacgen-byt5-small"
 
 syntax "pp_state" : tactic
 syntax "suggest_tactics" : tactic
@@ -174,6 +174,9 @@ elab_rules : tactic
     -- if result.completed then
     IO.println "Status completed. Using new model..."
     addModelUrl newModelUrl
+    IO.println "Registering new generator"
+    -- TODO: only do this one time though
+    loadAndRegisterGenerators
     IO.println "Added new model"
 
     -- TODO: must call lake exe LeanCopilot/download to download the new model before suggesitng

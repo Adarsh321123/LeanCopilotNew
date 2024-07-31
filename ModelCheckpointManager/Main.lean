@@ -3,9 +3,13 @@ import ModelCheckpointManager.Download
 import Init.System.IO
 import Lean
 import LeanCopilot.Models.Builtin
+import LeanCopilot.Models.Native
+import LeanCopilot.Models.Registry
+import Batteries.Data.HashMap
 
 open Lean
 open LeanCopilot
+open Batteries
 
 -- TODO: change?
 def configPath : IO System.FilePath := do
@@ -24,6 +28,7 @@ def loadCurrentModel : IO String := do
   else
     pure Builtin.generator.name
 
+-- TODO: do we need this if we can just download a new url immediately? when we restart the file, this won't be remembered anyway, right?
 -- Define a mutable reference to store additional URLs
 initialize additionalModelUrlsRef : IO.Ref (List String) ← IO.mkRef []
 
@@ -40,13 +45,58 @@ def builtinModelUrls : List String := [
   "https://huggingface.co/kaiyuy/ct2-byt5-small"
 ]
 
+-- Function to get all model URLs (built-in + additional)
+def getAllModelUrls : IO (List String) := do
+  let additional ← additionalModelUrlsRef.get
+  return builtinModelUrls ++ additional
+
+def getCurrentModel : IO String := currentModelRef.get
+
+def saveRegisteredGenerators (generators : Batteries.HashMap String Generator) : IO Unit := do
+  let config ← configPath
+  IO.println s!"Saving registered generators to {config}.generators"
+  -- let generatorNames := generators.toList.map (fun (name, _) => name)
+  let generatorUrls := generators.toList.map fun (name, gen) =>
+    match gen with
+    | .native ng => ng.url.toString
+    | _ => ""  -- Handle other generator types if needed
+  -- IO.println s!"Generator names: {generatorNames}"
+  IO.println s!"Generator URLs: {generatorUrls}"
+  IO.FS.writeFile (toString config ++ ".generators") (String.intercalate "\n" generatorUrls)
+  IO.println "Saved registered generators to file"
+
+def loadAndRegisterGenerators : IO Unit := do
+  let config ← configPath
+  IO.println s!"Loading registered generators from {config}.generators"
+  let generatorsFile := System.FilePath.mk $ toString config ++ ".generators"
+  IO.println s!"Generators file: {generatorsFile}"
+  if ← generatorsFile.pathExists then
+    IO.println "Generators file exists"
+    let contents ← IO.FS.readFile generatorsFile
+    IO.println s!"Contents: {contents}"
+    -- let generatorNames := contents.trim.split (· == '\n')
+    -- IO.println s!"Generator names: {generatorNames}"
+    let generatorUrls := contents.trim.split (· == '\n')
+    IO.println s!"Generator URLs: {generatorUrls}"
+    -- for name in generatorNames do
+    for url in generatorUrls do
+      IO.println s!"Loading generator for URL: {url}"
+      let parsedUrl := Url.parse! url
+      let newGenerator : NativeGenerator := {
+        url := parsedUrl
+        tokenizer := ByT5.tokenizer
+        params := { numReturnSequences := 32 }
+      }
+      registerGenerator parsedUrl.name! (.native newGenerator)
+      IO.println s!"Registered generator with name {parsedUrl.name!}"
+
 -- Function to add a new URL to the additional URLs list
 def addModelUrl (url : String) : IO Unit := do
   IO.println "Adding new generator url"
   additionalModelUrlsRef.modify (url :: ·)
   let url := Url.parse! url
 
-  IO.println "Registering new generator"
+  IO.println "Updating current model and saving to file"
   -- Re-register the option with the new URL
   -- Lean.registerOption `LeanCopilot.suggest_tactics.model {
   --   defValue := url.name!
@@ -54,12 +104,37 @@ def addModelUrl (url : String) : IO Unit := do
   currentModelRef.set url.name!
   saveCurrentModel url.name!
 
-def getCurrentModel : IO String := currentModelRef.get
+  IO.println "Registering new generator"
+  let newGenerator : NativeGenerator := {
+    url := url
+    tokenizer := ByT5.tokenizer
+    params := {
+      numReturnSequences := 32
+    }
+  }
+  IO.println "Calling register generator"
+  registerGenerator url.name! (.native newGenerator)
 
--- Function to get all model URLs (built-in + additional)
-def getAllModelUrls : IO (List String) := do
-  let additional ← additionalModelUrlsRef.get
-  return builtinModelUrls ++ additional
+  -- Save the updated list of registered generators
+  let mr ← getModelRegistry
+  IO.println "got model registry"
+  saveRegisteredGenerators mr.generators
+  IO.println "saved registered generators"
+
+  -- TODO: reduce duplication
+  IO.println "Downloading new generator"
+  let mut tasks := #[]
+  let urls ← getAllModelUrls
+  let parsedUrls := Url.parse! <$> urls
+
+  for url in parsedUrls do
+    tasks := tasks.push $ ← IO.asTask $ downloadUnlessUpToDate url
+
+  for t in tasks do
+    match ← IO.wait t with
+    | Except.error e => throw e
+    | Except.ok _ => pure ()
+
 
 structure Request where
   text : String
@@ -69,7 +144,7 @@ structure Response where
   output : String
 deriving FromJson
 
-def send {α β : Type} [ToJson α] [FromJson β] (req : α) (url : String) : IO β := do
+def sendStartTraining {α β : Type} [ToJson α] [FromJson β] (req : α) (url : String) : IO β := do
   let reqStr := (toJson req).pretty 99999999999999999
   IO.println s!"Sending request: {reqStr}"
   let out ← IO.Process.output {
@@ -98,6 +173,9 @@ def main (args : List String) : IO Unit := do
     | Except.error e => throw e
     | Except.ok _ => pure ()
 
+  -- TODO: some of these urls like the premise retriever should not be registered
+  loadAndRegisterGenerators
+
   -- Start progressive training with the initial repository
   -- TODO: ask for url somehow
   IO.println "Starting the program"
@@ -106,7 +184,7 @@ def main (args : List String) : IO Unit := do
     text := "hello"
   }
   -- TODO: make sure the request is sent only once or any request after that is avoided
-  let res : Response ← send req url
+  let res : Response ← sendStartTraining req url
   IO.println s!"Final response: {res.output}"
 
   println! "Done!"
