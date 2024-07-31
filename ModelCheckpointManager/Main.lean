@@ -7,10 +7,31 @@ import LeanCopilot.Models.Builtin
 open Lean
 open LeanCopilot
 
+-- TODO: change?
+def configPath : IO System.FilePath := do
+  let home ← IO.getEnv "HOME"
+  pure $ (home.getD "/") / ".lean_copilot_current_model"
+
+def saveCurrentModel (model : String) : IO Unit := do
+  let config ← configPath
+  IO.FS.writeFile config model
+
+def loadCurrentModel : IO String := do
+  let config ← configPath
+  if ← config.pathExists then
+    let contents ← IO.FS.readFile config
+    pure contents.trim
+  else
+    pure Builtin.generator.name
+
 -- Define a mutable reference to store additional URLs
 initialize additionalModelUrlsRef : IO.Ref (List String) ← IO.mkRef []
 
-initialize currentModelRef : IO.Ref String ← IO.mkRef Builtin.generator.name
+-- initialize currentModelRef : IO.Ref String ← IO.mkRef Builtin.generator.name
+
+initialize currentModelRef : IO.Ref String ← do
+  let model ← loadCurrentModel
+  IO.mkRef model
 
 def builtinModelUrls : List String := [
   "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-tacgen-byt5-small",
@@ -31,6 +52,7 @@ def addModelUrl (url : String) : IO Unit := do
   --   defValue := url.name!
   -- }
   currentModelRef.set url.name!
+  saveCurrentModel url.name!
 
 def getCurrentModel : IO String := currentModelRef.get
 
