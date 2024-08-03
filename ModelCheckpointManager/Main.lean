@@ -137,14 +137,14 @@ def addModelUrl (url : String) : IO Unit := do
 
 
 structure Request where
-  text : String
+  url : String
 deriving ToJson
 
 structure Response where
   output : String
 deriving FromJson
 
-def sendStartTraining {α β : Type} [ToJson α] [FromJson β] (req : α) (url : String) : IO β := do
+def sendUrlTraining {α β : Type} [ToJson α] [FromJson β] (req : α) (url : String) : IO β := do
   let reqStr := (toJson req).pretty 99999999999999999
   IO.println s!"Sending request: {reqStr}"
   let out ← IO.Process.output {
@@ -179,12 +179,11 @@ def main (args : List String) : IO Unit := do
   -- Start progressive training with the initial repository
   -- TODO: ask for url somehow
   IO.println "Starting the program"
-  let url := "http://127.0.0.1:8000/reverse/"
+  let url := "http://127.0.0.1:8000/train/"
   let req : Request := {
-    text := "hello"
+    url := "https://github.com/Adarsh321123/new-version-test.git"
   }
-  -- TODO: make sure the request is sent only once or any request after that is avoided
-  let res : Response ← sendStartTraining req url
+  let res : Response ← sendUrlTraining req url
   IO.println s!"Final response: {res.output}"
 
   println! "Done!"

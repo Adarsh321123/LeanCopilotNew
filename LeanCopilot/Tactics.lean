@@ -123,11 +123,11 @@ Retrieve a list of premises using the current pretty-printed tactic state as the
 def selectPremises : TacticM (Array PremiseInfo) := do
   retrieve (← getPpTacticState)
 
-structure StatusResponse where
+structure ModelInfo where
   completed : Bool
 deriving FromJson
 
-def get (url : String) : IO StatusResponse := do
+def get (url : String) : IO ModelInfo := do
   let out ← IO.Process.output {
     cmd := "curl"
     args := #["-X", "GET", url, "-H", "accept: application/json", "-H", "Content-Type: application/json"]
@@ -137,7 +137,7 @@ def get (url : String) : IO StatusResponse := do
      throw $ IO.userError s!"Request failed. Please check if the server is up at `{url}`."
   let some json := Json.parse out.stdout |>.toOption
     | throw $ IO.userError "Failed to parse response 1"
-  let some res := (fromJson? json : Except String StatusResponse) |>.toOption
+  let some res := (fromJson? json : Except String ModelInfo) |>.toOption
     | throw $ IO.userError "Failed to parse response 2"
   return res
 
@@ -165,8 +165,8 @@ elab_rules : tactic
     -- Check the status of progressive training
     -- TODO: make new function
     -- TODO: do this for proof and retrieve premise too
-    IO.println "Asking for status"
-    let url := "http://127.0.0.1:8000/check-status/"
+    IO.println "Asking for latest model"
+    let url := "http://127.0.0.1:8000/latest_model/"
     let result ← get url
     IO.println s!"API call result: {result.completed}"
     -- If the status is completed, update the model LeanCopilot uses
