@@ -202,18 +202,22 @@ elab_rules : tactic
     let result ← get url
     IO.println s!"API call result: {result.completed}"
     if result.completed then
-      -- TODO: check not already default before downloading
-      IO.println "Status completed. Using new model..."
+      IO.println "Status completed."
       let newEncoderUrl := result.ct2_url
       -- let newEncoderUrl := "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-retriever-byt5-small"
       let newEmbUrl := result.emb_url
       -- let newEmbUrl := "https://huggingface.co/kaiyuy/premise-embeddings-leandojo-lean4-retriever-byt5-small"
       IO.println s!"New model URL: {newEncoderUrl}"
       IO.println s!"New emb URL: {newEmbUrl}"
-      addEncoderUrl newEncoderUrl
-      IO.println "Added new encoder"
-      addEmbUrl newEmbUrl
-      IO.println "Added new emb"
+      let currentEncoderUrl ← getCurrentEncoderUrl
+      if currentEncoderUrl ≠ newEncoderUrl then
+        IO.println "Using new model"
+        addEncoderUrl newEncoderUrl
+        IO.println "Added new encoder"
+        addEmbUrl newEmbUrl
+        IO.println "Added new emb"
+      else
+        IO.println "Using current model"
 
     let premisesWithInfoAndScores ← selectPremises
     let rankedPremisesWithInfoAndScores := premisesWithInfoAndScores.qsort (·.score > ·.score)
