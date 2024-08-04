@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import requests
+import uvicorn
 
 app = FastAPI()
 
@@ -22,6 +23,13 @@ class ModelInfo(BaseModel):
     emb_url: str
     last_modified: str
 
+unique_urls = set()
+# TODO: remove after testing
+url1 = "https://github.com/leanprover-community/mathlib4.git"
+url2 = "https://github.com/teorth/pfr.git"
+unique_urls.add(url1)
+unique_urls.add(url2)
+
 @app.post("/train/")
 async def add_model_to_train(request: Request):
     print(f"Adding model to train: {request.url}")
@@ -31,7 +39,7 @@ async def add_model_to_train(request: Request):
     return Response(output=f"Model added to train: {url}")
 
 # curl -X 'POST' \
-#   'http://127.0.0.1:8000/train/' \
+#   'https://leancopilotapi.onrender.com/train/' \
 #   -H 'accept: application/json' \
 #   -H 'Content-Type: application/json' \
 #   -d '{"url": "https://github.com/Adarsh321123/new-version-test.git"}'
@@ -42,7 +50,7 @@ async def get_urls():
     return {"urls": list(unique_urls)}
 
 # curl -X 'GET' \
-#   'http://127.0.0.1:8000/get_urls/' \
+#   'https://leancopilotapi.onrender.com/get_urls/' \
 #   -H 'accept: application/json' \
 #   -H 'Content-Type: application/json'
 
@@ -55,7 +63,8 @@ async def get_latest_model():
         response = requests.get(f"{HUGGINGFACE_API_URL}?author={USER}", timeout=10)
         models = response.json()
 
-        if not models:        
+        if not models:
+            print("No models found for user")
             return ModelInfo(
                 completed=False,
                 message="No models found for user",
@@ -80,6 +89,8 @@ async def get_latest_model():
                 latest_emb = model
                 break
 
+        print(f"latest_model id is: {latest_model['modelId']}")
+        print(f"latest_emb id is: {latest_emb['modelId']}")
         return ModelInfo(
             completed=True,
             message="Latest model retrieved successfully",
@@ -90,6 +101,7 @@ async def get_latest_model():
             last_modified=latest_model['createdAt']
         )
     except requests.RequestException as e:
+        print(f"Error: {e}")
         return ModelInfo(
             completed=False,
             message=f"Unable to fetch latest model due to a network issue. Please try again later.",
@@ -101,7 +113,7 @@ async def get_latest_model():
         )
     
 # curl -X 'GET' \
-#   'http://127.0.0.1:8000/latest_model/' \
+#   'https://leancopilotapi.onrender.com/latest_model/' \
 #   -H 'accept: application/json' \
 #   -H 'Content-Type: application/json'
 
@@ -159,11 +171,4 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    unique_urls = set()
-    # TODO: remove after testing
-    url1 = "https://github.com/leanprover-community/mathlib4.git"
-    url2 = "https://github.com/teorth/pfr.git"
-    unique_urls.add(url1)
-    unique_urls.add(url2)
-    import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
