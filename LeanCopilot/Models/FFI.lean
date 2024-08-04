@@ -155,6 +155,7 @@ namespace NativeEncoder
 
 
 def encode (model : NativeEncoder) (input : String) : IO FloatArray := do
+  IO.println "Inside encode native encoder"
   if ¬ FFI.isEncoderInitialized model.name then
     let path ← model.path
     if ¬ (← path.pathExists) then
@@ -164,9 +165,14 @@ def encode (model : NativeEncoder) (input : String) : IO FloatArray := do
     if ¬ (FFI.initEncoder model.name path.toString computeType device model.deviceIndex) then
       throw $ IO.userError s!"Failed to initialize model {model.name}"
 
+  IO.println "after if statement"
   let tokenizer := model.tokenizer
+  IO.println "got tokenizer"
   let inputTokens := tokenizer.tokenize input |>.push tokenizer.eosToken
-  return FFI.encode model.name inputTokens
+  IO.println "got input token"
+  let result := FFI.encode model.name inputTokens
+  IO.println "got result"
+  return result
 
 
 instance : TextToVec NativeEncoder where

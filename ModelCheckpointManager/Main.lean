@@ -85,21 +85,22 @@ def addEncoderUrl (url : String) : IO Unit := do
   IO.println "Saved new retriever URL"
 
   -- TODO: reduce duplication
+  -- need to download synchronously to avoid obstructing InfoView output
   IO.println "Downloading new retriever"
-  let mut tasks := #[]
   let urls ← getAllModelUrls
-  -- print all urls
   for url in urls do
     IO.println s!"URL: {url}"
   let parsedUrls := Url.parse! <$> urls
 
   for url in parsedUrls do
-    tasks := tasks.push $ ← IO.asTask $ downloadUnlessUpToDate url
+    IO.println s!"Downloading {url}"
+    try
+      downloadUnlessUpToDate url
+      IO.println s!"Downloaded {url}"
+    catch e =>
+      IO.println s!"Error downloading {url}: {e.toString}"
 
-  for t in tasks do
-    match ← IO.wait t with
-    | Except.error e => throw e
-    | Except.ok _ => pure ()
+  IO.println "Downloaded all retrievers"
 
 def addEmbUrl (url : String) : IO Unit := do
   IO.println "Adding new embedding URL"
@@ -113,21 +114,22 @@ def addEmbUrl (url : String) : IO Unit := do
   IO.println "Saved new embedding URL"
 
   -- TODO: reduce duplication
+  -- need to download synchronously to avoid obstructing InfoView output
   IO.println "Downloading new embeddings"
-  let mut tasks := #[]
   let urls ← getAllModelUrls
-  -- print all urls
   for url in urls do
     IO.println s!"URL: {url}"
   let parsedUrls := Url.parse! <$> urls
 
   for url in parsedUrls do
-    tasks := tasks.push $ ← IO.asTask $ downloadUnlessUpToDate url
+    IO.println s!"Downloading {url}"
+    try
+      downloadUnlessUpToDate url
+      IO.println s!"Downloaded {url}"
+    catch e =>
+      IO.println s!"Error downloading {url}: {e.toString}"
 
-  for t in tasks do
-    match ← IO.wait t with
-    | Except.error e => throw e
-    | Except.ok _ => pure ()
+  IO.println "Downloaded all embeddings"
 
 structure Request where
   url : String

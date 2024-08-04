@@ -102,6 +102,7 @@ private def annotatePremise (pi : PremiseInfo) : MetaM String := do
 Retrieve a list of premises given a query.
 -/
 def retrieve (input : String) : TacticM (Array PremiseInfo) := do
+  IO.println "inside retrieve"
   if ¬ (← premiseEmbeddingsInitialized) ∧ ¬ (← initPremiseEmbeddings .auto) then
     throwError "Cannot initialize premise embeddings"
 
@@ -109,6 +110,7 @@ def retrieve (input : String) : TacticM (Array PremiseInfo) := do
     throwError "Cannot initialize premise dictionary"
 
   let k ← SelectPremises.getNumPremises
+  IO.println s!"Number of premises: {k}"
   let currentEncoderUrl ← liftM loadCurrentEncoderUrl
   IO.println s!"Current encoder URL: {currentEncoderUrl}"
   let currentEncoder : NativeEncoder := {
@@ -129,6 +131,7 @@ def retrieve (input : String) : TacticM (Array PremiseInfo) := do
 Retrieve a list of premises using the current pretty-printed tactic state as the query.
 -/
 def selectPremises : TacticM (Array PremiseInfo) := do
+  IO.println "inside selectPremises"
   retrieve (← getPpTacticState)
 
 structure ModelInfo where
