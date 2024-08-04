@@ -24,20 +24,11 @@ class ModelInfo(BaseModel):
     emb_url: str
     last_modified: str
 
-unique_urls = set()
-
 @app.post("/train/")
 async def add_model_to_train(request: Request):
     print(f"Adding model to train: {request.url}")
     url = request.url
     unique_urls.add(url)
-
-    # TODO: remove after testing
-    url2 = "https://github.com/Adarsh321123/new-version-test.git"
-    url3 = "https://github.com/Adarsh321123/mathematics_in_lean_source.git"
-    unique_urls.add(url2)
-    unique_urls.add(url3)
-
     print(f"all unique urls: {unique_urls}")
     return Response(output=f"Model added to train: {url}")
 
@@ -47,8 +38,19 @@ async def add_model_to_train(request: Request):
 #   -H 'Content-Type: application/json' \
 #   -d '{"url": "https://github.com/Adarsh321123/new-version-test.git"}'
 
+@app.get("/get_urls/")
+async def get_urls():
+    print(f"Getting all unique urls: {unique_urls}")
+    return {"urls": list(unique_urls)}
+
+# curl -X 'GET' \
+#   'http://127.0.0.1:8000/get_urls/' \
+#   -H 'accept: application/json' \
+#   -H 'Content-Type: application/json'
+
 @app.get("/latest_model/")
 async def get_latest_model():
+    # TODO: later, the compute server can tell the endpoint what the latest is so we can avoid many HF calls, at that piont we can also delete existing urls
     # TODO: use api key if needed
     # This endpoint handles errors gracefully by always returning a successful response
     try:
@@ -99,6 +101,11 @@ async def get_latest_model():
             emb_url=None,
             last_modified=None
         )
+    
+# curl -X 'GET' \
+#   'http://127.0.0.1:8000/latest_model/' \
+#   -H 'accept: application/json' \
+#   -H 'Content-Type: application/json'
 
 def main():
     import ipdb; ipdb.set_trace()
@@ -152,12 +159,13 @@ def main():
             last_modified=None
         )
 
-# curl -X 'GET' \
-#   'http://127.0.0.1:8000/latest_model/' \
-#   -H 'accept: application/json' \
-#   -H 'Content-Type: application/json'
-
 if __name__ == "__main__":
     # main()
+    unique_urls = set()
+    # TODO: remove after testing
+    url1 = "https://github.com/leanprover-community/mathlib4.git"
+    url2 = "https://github.com/teorth/pfr.git"
+    unique_urls.add(url1)
+    unique_urls.add(url2)
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
