@@ -46,32 +46,32 @@ def suggestTactics (targetPrefix : String) : TacticM (Array (String × Float)) :
   let nm ← getCurrentGeneratorNameIO
   IO.println s!"Current generator name: {nm}"
   let model ← getGenerator nm
-  -- let suggestions ← generate model state targetPrefix
-  -- -- A temporary workaround to prevent the tactic from using the current theorem.
-  -- -- TODO: Use a more principled way, e.g., see `Lean4Repl.lean` in `LeanDojo`.
-  -- if let some declName ← getDeclName? then
-  --   let theoremName := match declName.toString with
-  --     | "_example" => ""
-  --     | n => n.splitOn "." |>.getLast!
-  --   let theoremNameMatcher := String.Matcher.ofString theoremName
-  --   if ← isVerbose then
-  --     logInfo s!"State:\n{state}"
-  --     logInfo s!"Theorem name:\n{theoremName}"
-  --   let filteredSuggestions := suggestions.filterMap fun ((t, s) : String × Float) =>
-  --     let isAesop := t == "aesop"
-  --     let isSelfReference := ¬ (theoremName == "") ∧ (theoremNameMatcher.find? t |>.isSome)
-  --     if isSelfReference ∨ isAesop then none else some (t, s)
-  --   IO.println "About to return filtered suggestions inside if"
-  --   IO.println filteredSuggestions
-  --   return filteredSuggestions
-  -- else
-  --   let filteredSuggestions := suggestions.filterMap fun ((t, s) : String × Float) =>
-  --     let isAesop := t == "aesop"
-  --     if isAesop then none else some (t, s)
-  --   IO.println "About to return filtered suggestions outside if"
-  --   IO.println filteredSuggestions
-  --   return filteredSuggestions
-  return #[]
+  let suggestions ← generate model state targetPrefix
+  -- A temporary workaround to prevent the tactic from using the current theorem.
+  -- TODO: Use a more principled way, e.g., see `Lean4Repl.lean` in `LeanDojo`.
+  if let some declName ← getDeclName? then
+    let theoremName := match declName.toString with
+      | "_example" => ""
+      | n => n.splitOn "." |>.getLast!
+    let theoremNameMatcher := String.Matcher.ofString theoremName
+    if ← isVerbose then
+      logInfo s!"State:\n{state}"
+      logInfo s!"Theorem name:\n{theoremName}"
+    let filteredSuggestions := suggestions.filterMap fun ((t, s) : String × Float) =>
+      let isAesop := t == "aesop"
+      let isSelfReference := ¬ (theoremName == "") ∧ (theoremNameMatcher.find? t |>.isSome)
+      if isSelfReference ∨ isAesop then none else some (t, s)
+    IO.println "About to return filtered suggestions inside if"
+    IO.println filteredSuggestions
+    return filteredSuggestions
+  else
+    let filteredSuggestions := suggestions.filterMap fun ((t, s) : String × Float) =>
+      let isAesop := t == "aesop"
+      if isAesop then none else some (t, s)
+    IO.println "About to return filtered suggestions outside if"
+    IO.println filteredSuggestions
+    return filteredSuggestions
+  -- return #[]
 
 
 /--
@@ -165,16 +165,16 @@ elab_rules : tactic
     -- Check the status of progressive training
     -- TODO: make new function
     -- TODO: do this for proof and retrieve premise too
-    IO.println "Asking for status"
-    let url := "http://127.0.0.1:8000/check-status/"
-    let result ← get url
-    IO.println s!"API call result: {result.completed}"
-    -- If the status is completed, update the model LeanCopilot uses
-    -- TODO: uncomment
-    -- if result.completed then
-    IO.println "Status completed. Using new model..."
-    addModelUrl newModelUrl
-    IO.println "Added new model"
+    -- IO.println "Asking for status"
+    -- let url := "http://127.0.0.1:8000/check-status/"
+    -- let result ← get url
+    -- IO.println s!"API call result: {result.completed}"
+    -- -- If the status is completed, update the model LeanCopilot uses
+    -- -- TODO: uncomment
+    -- -- if result.completed then
+    -- IO.println "Status completed. Using new model..."
+    -- addModelUrl newModelUrl
+    -- IO.println "Added new model"
 
     -- TODO: must call lake exe LeanCopilot/download to download the new model before suggesitng
 

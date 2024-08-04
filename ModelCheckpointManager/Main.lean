@@ -14,8 +14,8 @@ initialize currentModelRef : IO.Ref String ← IO.mkRef Builtin.generator.name
 
 def builtinModelUrls : List String := [
   "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-tacgen-byt5-small",
-  "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-retriever-byt5-small",
-  "https://huggingface.co/kaiyuy/premise-embeddings-leandojo-lean4-retriever-byt5-small",
+  "https://huggingface.co/AK123321/ct2-leancopilot-1",
+  "https://huggingface.co/kaiyuy/https://huggingface.co/AK123321/emb-leancopilot-1",
   "https://huggingface.co/kaiyuy/ct2-byt5-small"
 ]
 
@@ -76,15 +76,15 @@ def main (args : List String) : IO Unit := do
     | Except.error e => throw e
     | Except.ok _ => pure ()
 
-  -- Start progressive training with the initial repository
-  -- TODO: ask for url somehow
-  IO.println "Starting the program"
-  let url := "http://127.0.0.1:8000/reverse/"
-  let req : Request := {
-    text := "hello"
-  }
-  -- TODO: make sure the request is sent only once or any request after that is avoided
-  let res : Response ← send req url
-  IO.println s!"Final response: {res.output}"
+  -- -- Start progressive training with the initial repository
+  -- -- TODO: ask for url somehow
+  -- IO.println "Starting the program"
+  -- let url := "http://127.0.0.1:8000/reverse/"
+  -- let req : Request := {
+  --   text := "hello"
+  -- }
+  -- -- TODO: make sure the request is sent only once or any request after that is avoided
+  -- let res : Response ← send req url
+  -- IO.println s!"Final response: {res.output}"
 
   println! "Done!"

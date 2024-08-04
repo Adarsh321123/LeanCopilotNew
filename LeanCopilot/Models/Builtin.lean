@@ -16,12 +16,12 @@ def generator : NativeGenerator := {
 
 
 def encoder : NativeEncoder := {
-  url := Url.parse! "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-retriever-byt5-small"
+  url := Url.parse! "https://huggingface.co/AK123321/ct2-leancopilot-1"
   tokenizer := ByT5.tokenizer
 }
 
 
-def premisesUrl := Url.parse! "https://huggingface.co/kaiyuy/premise-embeddings-leandojo-lean4-retriever-byt5-small"
+def premisesUrl := Url.parse! "https://huggingface.co/AK123321/emb-leancopilot-1"
 
 
 end LeanCopilot.Builtin
