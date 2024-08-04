@@ -44,7 +44,7 @@ def byt5 : NativeGenerator := {
 ReProver's retriever encoder in CT2 format.
 -/
 def reproverEncoder : NativeEncoder := {
-  url := Url.parse! "https://huggingface.co/AK123321/ct2-leancopilot-1"
+  url := Url.parse! "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-retriever-byt5-small"
   tokenizer := ByT5.tokenizer
 }
 

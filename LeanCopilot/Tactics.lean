@@ -43,7 +43,7 @@ Generate a list of tactic suggestions.
 def suggestTactics (targetPrefix : String) : TacticM (Array (String × Float)) := do
   IO.println s!"Inside suggestTactics"
   let state ← getPpTacticState
-  let nm ← getCurrentGeneratorNameIO
+  let nm ← getGeneratorName
   IO.println s!"Current generator name: {nm}"
   let model ← getGenerator nm
   let suggestions ← generate model state targetPrefix
@@ -109,7 +109,15 @@ def retrieve (input : String) : TacticM (Array PremiseInfo) := do
     throwError "Cannot initialize premise dictionary"
 
   let k ← SelectPremises.getNumPremises
-  let query ← encode Builtin.encoder input
+  let currentEncoderUrl ← liftM loadCurrentEncoderUrl
+  IO.println s!"Current encoder URL: {currentEncoderUrl}"
+  let currentEncoder : NativeEncoder := {
+    url := Url.parse! currentEncoderUrl
+    tokenizer := ByT5.tokenizer
+  }
+  IO.println "Created currentEncoder"
+  let query ← encode currentEncoder input
+  IO.println "Encoded query"
 
   let rawPremiseInfo := FFI.retrieve query k.toUInt64
   let premiseInfo : Array PremiseInfo := rawPremiseInfo.map fun (name, path, code, score) =>
@@ -123,11 +131,15 @@ Retrieve a list of premises using the current pretty-printed tactic state as the
 def selectPremises : TacticM (Array PremiseInfo) := do
   retrieve (← getPpTacticState)
 
-structure StatusResponse where
+structure ModelInfo where
   completed : Bool
+  message: String
+  model_name: String
+  url: String
+  last_modified: String
 deriving FromJson
 
-def get (url : String) : IO StatusResponse := do
+def get (url : String) : IO ModelInfo := do
   let out ← IO.Process.output {
     cmd := "curl"
     args := #["-X", "GET", url, "-H", "accept: application/json", "-H", "Content-Type: application/json"]
@@ -137,11 +149,9 @@ def get (url : String) : IO StatusResponse := do
      throw $ IO.userError s!"Request failed. Please check if the server is up at `{url}`."
   let some json := Json.parse out.stdout |>.toOption
     | throw $ IO.userError "Failed to parse response 1"
-  let some res := (fromJson? json : Except String StatusResponse) |>.toOption
+  let some res := (fromJson? json : Except String ModelInfo) |>.toOption
     | throw $ IO.userError "Failed to parse response 2"
   return res
-
-def newModelUrl := "https://huggingface.co/new-model-url3"
 
 syntax "pp_state" : tactic
 syntax "suggest_tactics" : tactic
@@ -162,39 +172,39 @@ elab_rules : tactic
     IO.println s!"Inside suggest_tactics"
     IO.println s!"Prefix: {pfx.getString}"
 
-    -- Check the status of progressive training
-    -- TODO: make new function
-    -- TODO: do this for proof and retrieve premise too
-    -- IO.println "Asking for status"
-    -- let url := "http://127.0.0.1:8000/check-status/"
-    -- let result ← get url
-    -- IO.println s!"API call result: {result.completed}"
-    -- -- If the status is completed, update the model LeanCopilot uses
-    -- -- TODO: uncomment
-    -- -- if result.completed then
-    -- IO.println "Status completed. Using new model..."
-    -- addModelUrl newModelUrl
-    -- IO.println "Added new model"
-
-    -- TODO: must call lake exe LeanCopilot/download to download the new model before suggesitng
-
-
     let (tacticsWithScores, elapsed) ← Aesop.time $ suggestTactics pfx.getString
     IO.println s!"Elapsed time: {elapsed.printAsMillis}"
-    -- if ← isVerbose then
-    --   logInfo s!"{elapsed.printAsMillis} for generating {tacticsWithScores.size} tactics"
-    -- let tactics := tacticsWithScores.map (·.1)
-    -- IO.println tactics
-    -- if ← isVerbose then
-    --   logInfo s!"Tactics: {tactics}"
-    -- let range : String.Range := { start := tac.getRange?.get!.start, stop := pfx.raw.getRange?.get!.stop }
-    -- IO.println "Got range as string"
-    -- let ref := Syntax.ofRange range
-    -- IO.println "Got range as syntax"
-    -- hint ref tactics (← SuggestTactics.checkTactics)
-    -- IO.println "Hinted"
+    if ← isVerbose then
+      logInfo s!"{elapsed.printAsMillis} for generating {tacticsWithScores.size} tactics"
+    let tactics := tacticsWithScores.map (·.1)
+    IO.println tactics
+    if ← isVerbose then
+      logInfo s!"Tactics: {tactics}"
+    let range : String.Range := { start := tac.getRange?.get!.start, stop := pfx.raw.getRange?.get!.stop }
+    IO.println "Got range as string"
+    let ref := Syntax.ofRange range
+    IO.println "Got range as syntax"
+    hint ref tactics (← SuggestTactics.checkTactics)
+    IO.println "Hinted"
 
   | `(tactic | select_premises) => do
+    IO.println "inside select_premises"
+
+    -- Check the status of progressive training
+    -- TODO: make new function
+    IO.println "Asking for latest model"
+    let url := "http://127.0.0.1:8000/latest_model/"
+    let result ← get url
+    IO.println s!"API call result: {result.completed}"
+    if result.completed then
+      -- TODO: check not already default before downloading
+      IO.println "Status completed. Using new model..."
+      let newModelUrl := result.url
+      -- let newModelUrl := "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-retriever-byt5-small"
+      IO.println s!"New model URL: {newModelUrl}"
+      addEncoderUrl newModelUrl
+      IO.println "Added new model"
+
     let premisesWithInfoAndScores ← selectPremises
     let rankedPremisesWithInfoAndScores := premisesWithInfoAndScores.qsort (·.score > ·.score)
     let richPremises ← Meta.liftMetaM $ (rankedPremisesWithInfoAndScores.mapM annotatePremise)

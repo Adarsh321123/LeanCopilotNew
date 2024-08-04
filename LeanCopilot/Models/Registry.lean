@@ -100,7 +100,9 @@ def getGenerator (name : String) : Lean.CoreM Generator := do
 def getEncoder (name : String) : IO Encoder := do
   let mr ← getModelRegistry
   match mr.encoders.find? name with
-  | some descr => return descr
+  | some descr =>
+    IO.println "Inside getEncoder and found native encoder"
+    return descr
   | none => throw $ IO.userError s!"unknown encoder: {name}"
 
 
