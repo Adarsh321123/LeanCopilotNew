@@ -134,8 +134,10 @@ def selectPremises : TacticM (Array PremiseInfo) := do
 structure ModelInfo where
   completed : Bool
   message: String
-  model_name: String
-  url: String
+  ct2_model_name: String
+  ct2_url: String
+  emb_name: String
+  emb_url: String
   last_modified: String
 deriving FromJson
 
@@ -199,11 +201,16 @@ elab_rules : tactic
     if result.completed then
       -- TODO: check not already default before downloading
       IO.println "Status completed. Using new model..."
-      let newModelUrl := result.url
-      -- let newModelUrl := "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-retriever-byt5-small"
-      IO.println s!"New model URL: {newModelUrl}"
-      addEncoderUrl newModelUrl
-      IO.println "Added new model"
+      let newEncoderUrl := result.ct2_url
+      -- let newEncoderUrl := "https://huggingface.co/kaiyuy/ct2-leandojo-lean4-retriever-byt5-small"
+      let newEmbUrl := result.emb_url
+      -- let newEmbUrl := "https://huggingface.co/kaiyuy/premise-embeddings-leandojo-lean4-retriever-byt5-small"
+      IO.println s!"New model URL: {newEncoderUrl}"
+      IO.println s!"New emb URL: {newEmbUrl}"
+      addEncoderUrl newEncoderUrl
+      IO.println "Added new encoder"
+      addEmbUrl newEmbUrl
+      IO.println "Added new emb"
 
     let premisesWithInfoAndScores ← selectPremises
     let rankedPremisesWithInfoAndScores := premisesWithInfoAndScores.qsort (·.score > ·.score)

@@ -1,6 +1,5 @@
 import Lean
 import LeanCopilot.Models
-import ModelCheckpointManager.Main
 
 set_option autoImplicit false
 

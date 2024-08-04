@@ -2,6 +2,7 @@ import Lean
 import LeanCopilot.Models.Interface
 import LeanCopilot.Models.Native
 import LeanCopilot.Models.Builtin
+import ModelCheckpointManager.Main
 
 namespace LeanCopilot
 
@@ -180,10 +181,12 @@ def premiseEmbeddingsInitialized : IO Bool := do
 
 
 def initPremiseEmbeddings (device : Device) : Lean.CoreM Bool := do
-  let url := Builtin.premisesUrl
-  if ¬(← isUpToDate url) then
+  let url ← liftM loadCurrentEmbUrl
+  IO.println s!"Init premise embeddings with URL: {url}"
+  let parsed_url := Url.parse! url
+  if ¬(← isUpToDate parsed_url) then
     Lean.logWarning s!"The local premise embeddings are not up to date. You may want to run `lake exe LeanCopilot/download` to re-download it."
-  let path := (← getModelDir url) / "embeddings.npy"
+  let path := (← getModelDir parsed_url) / "embeddings.npy"
   if ¬ (← path.pathExists) then
     throwError s!"Please run `lake exe download {url}` to download premise embeddings."
     return false
@@ -195,9 +198,12 @@ def premiseDictionaryInitialized : IO Bool := do
 
 
 def initPremiseDictionary : IO Bool := do
-  let path := (← getModelDir Builtin.premisesUrl) / "dictionary.json"
+  let url ← liftM loadCurrentEmbUrl
+  IO.println s!"Init premise dictionary with URL: {url}"
+  let parsed_url := Url.parse! url
+  let path := (← getModelDir parsed_url) / "dictionary.json"
   if ¬ (← path.pathExists) then
-    throw $ IO.userError s!"Please run `lake exe download {Builtin.premisesUrl}` to download the premise dictionary."
+    throw $ IO.userError s!"Please run `lake exe download {url}` to download the premise dictionary."
     return false
   return FFI.initPremiseDictionary path.toString
 
