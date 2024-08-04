@@ -24,4 +24,9 @@ def encoder : NativeEncoder := {
 def premisesUrl := Url.parse! "https://huggingface.co/kaiyuy/premise-embeddings-leandojo-lean4-retriever-byt5-small"
 
 
+-- TODO: find better default
+-- TODO: try to get this automatically instead of asking user
+def currentRepoUrl := "https://github.com/teorth/pfr.git"
+
+
 end LeanCopilot.Builtin

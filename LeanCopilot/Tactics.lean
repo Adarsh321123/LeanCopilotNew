@@ -216,6 +216,16 @@ elab_rules : tactic
         IO.println "Added new encoder"
         addEmbUrl newEmbUrl
         IO.println "Added new emb"
+
+        -- Send request to progressively train on this model
+        IO.println "Asking to progressively train on the current repo"
+        let url := "http://127.0.0.1:8000/train/"
+        let req : Request := {
+          url := Builtin.currentRepoUrl
+        }
+        let res : Response ← sendUrlTraining req url
+        IO.println s!"Final response: {res.output}"
+
       else
         IO.println "Using current model"
 

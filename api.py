@@ -38,7 +38,7 @@ async def add_model_to_train(request: Request):
     unique_urls.add(url2)
     unique_urls.add(url3)
 
-    print(unique_urls)
+    print(f"all unique urls: {unique_urls}")
     return Response(output=f"Model added to train: {url}")
 
 # curl -X 'POST' \

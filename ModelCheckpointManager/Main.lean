@@ -168,13 +168,4 @@ def main (args : List String) : IO Unit := do
     | Except.error e => throw e
     | Except.ok _ => pure ()
 
-  -- Start progressive training with the initial repository
-  -- IO.println "Starting the program"
-  -- let url := "http://127.0.0.1:8000/train/"
-  -- let req : Request := {
-  --   url := "https://github.com/Adarsh321123/new-version-test.git"
-  -- }
-  -- let res : Response ← sendUrlTraining req url
-  -- IO.println s!"Final response: {res.output}"
-
   println! "Done!"
