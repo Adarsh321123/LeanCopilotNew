@@ -198,7 +198,7 @@ elab_rules : tactic
     -- Check the status of progressive training
     -- TODO: make new function
     IO.println "Asking for latest model"
-    let url := "http://127.0.0.1:8000/latest_model/"
+    let url := "https://leancopilotapi.onrender.com/latest_model/"
     let result ← get url
     IO.println s!"API call result: {result.completed}"
     if result.completed then
@@ -219,7 +219,7 @@ elab_rules : tactic
 
         -- Send request to progressively train on this model
         IO.println "Asking to progressively train on the current repo"
-        let url := "http://127.0.0.1:8000/train/"
+        let url := "https://leancopilotapi.onrender.com/train/"
         let req : Request := {
           url := Builtin.currentRepoUrl
         }
