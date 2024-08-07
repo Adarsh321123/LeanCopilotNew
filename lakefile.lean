@@ -144,13 +144,8 @@ def gitClone (url : String) (cwd : Option FilePath) : LogIO Unit := do
 
 
 def runCmake (root : FilePath) (flags : Array String) : LogIO Unit := do
-  IO.println s!"Running cmake in {root}"
-  IO.println s!"Flags: {flags}"
-  -- TODO: remove later
-  let flags := flags ++ ["-DCMAKE_BUILD_TYPE=Debug"]
   assert! (← root.pathExists) ∧ (← (root / "CMakeLists.txt").pathExists)
   let buildDir := root / "build"
-  IO.println s!"Build directory: {buildDir}"
   if ← buildDir.pathExists then
     IO.FS.removeDirAll buildDir
   IO.FS.createDirAll buildDir
@@ -210,18 +205,11 @@ target libopenblas pkg : FilePath := do
 
 
 def getCt2CmakeFlags : IO (Array String) := do
-  -- TODO: update later
-  -- let mut flags := #["-DBUILD_CLI=OFF", "-DOPENMP_RUNTIME=NONE", "-DWITH_DNNL=OFF", "-DWITH_MKL=OFF"]
-  let mut flags := #["-DOPENMP_RUNTIME=NONE", "-DWITH_MKL=OFF", "-DWITH_ACCELERATE=OFF", "-DWITH_OPENBLAS=ON", "-DOPENBLAS_INCLUDE_DIR=../../OpenBLAS", "-DOPENBLAS_LIBRARY=../../OpenBLAS/libopenblas.so"]
+  let mut flags := #["-DOPENMP_RUNTIME=NONE", "-DWITH_MKL=OFF"]
 
-  -- match getOS! with
-  -- | .macos => flags := flags ++ #["-DWITH_ACCELERATE=ON", "-DWITH_OPENBLAS=OFF"]
-  -- | .linux => flags := flags ++ #["-DWITH_ACCELERATE=OFF", "-DWITH_OPENBLAS=ON", "-DOPENBLAS_INCLUDE_DIR=../../OpenBLAS", "-DOPENBLAS_LIBRARY=../../OpenBLAS/libopenblas.so"]
-
-  -- if ← useCUDA then
-  --   flags := flags ++ #["-DWITH_CUDA=ON", "-DWITH_CUDNN=ON"]
-  -- else
-  --   flags := flags ++ #["-DWITH_CUDA=OFF", "-DWITH_CUDNN=OFF"]
+  match getOS! with
+  | .macos => flags := flags ++ #["-DWITH_ACCELERATE=ON", "-DWITH_OPENBLAS=OFF"]
+  | .linux => flags := flags ++ #["-DWITH_ACCELERATE=OFF", "-DWITH_OPENBLAS=ON", "-DOPENBLAS_INCLUDE_DIR=../../OpenBLAS", "-DOPENBLAS_LIBRARY=../../OpenBLAS/libopenblas.so"]
 
   return flags
 
