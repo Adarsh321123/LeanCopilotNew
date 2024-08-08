@@ -20,9 +20,7 @@ inductive Generator where
 
 
 instance : TextToText Generator where
-  generate (model : Generator) (input : String) (targetPrefix : String) := do
-    IO.println "Inside generate instance"
-    -- return #[]
+  generate (model : Generator) (input : String) (targetPrefix : String) :=
     match model with
     | .native ng => ng.generate input targetPrefix
     | .external eg => eg.generate input targetPrefix

@@ -11,9 +11,7 @@ class TextToVec (τ : Type) where
   encode : τ → String → IO FloatArray
 
 
-def generate {τ : Type} [TextToText τ] (model : τ) (input : String) (targetPrefix : String := "") : IO $ Array (String × Float) := do
-  IO.println s!"Inside generate"
-  -- return #[]
+def generate {τ : Type} [TextToText τ] (model : τ) (input : String) (targetPrefix : String := "") : IO $ Array (String × Float) :=
   TextToText.generate model input targetPrefix
 
 

@@ -71,7 +71,6 @@ def suggestTactics (targetPrefix : String) : TacticM (Array (String × Float)) :
     IO.println "About to return filtered suggestions outside if"
     IO.println filteredSuggestions
     return filteredSuggestions
-  -- return #[]
 
 
 /--

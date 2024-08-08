@@ -43,10 +43,12 @@ register_option LeanCopilot.suggest_tactics.model : String := {
   defValue := Builtin.generator.name
 }
 
+
 def getGeneratorName : m String := do
   match LeanCopilot.suggest_tactics.model.get? (← getOptions) with
   | some n => return n
   | _ => return Builtin.generator.name
+
 
 end SuggestTactics
 

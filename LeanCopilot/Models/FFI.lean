@@ -58,9 +58,6 @@ def cudaAvailable : Bool := FFI.cudaAvailable ()
 
 namespace NativeGenerator
 
--- def joinStrings (arr : Array String) : String :=
---   arr.foldl (fun acc str => acc ++ " " ++ str) ""
-
 def generate (model : NativeGenerator) (input : String) (targetPrefix : String) : IO $ Array (String × Float) := do
   IO.println "Inside generate native generator"
   if ¬ FFI.isGeneratorInitialized model.name then
@@ -86,8 +83,6 @@ def generate (model : NativeGenerator) (input : String) (targetPrefix : String) 
   let patience := model.params.patience
   let temperature := model.params.temperature
 
-  -- let tokensWithScores := FFI.generate model.name inputTokens targetPrefixTokens numReturnSequences beamSize minLength maxLength lengthPenalty patience temperature
-
   IO.println "About to call FFI.generate"
   IO.println s!"Model name: {model.name}"
   let tokensWithScores := FFI.generate model.name inputTokens targetPrefixTokens numReturnSequences beamSize minLength maxLength lengthPenalty patience temperature
@@ -95,54 +90,7 @@ def generate (model : NativeGenerator) (input : String) (targetPrefix : String) 
 
   IO.println s!"Size: {tokensWithScores.size}"
 
-  let result := tokensWithScores.filterMap fun ((ts, s) : Array String × Float) => (tokenizer.detokenize ts, s)
-  IO.println "Result mapped successfully"
-  IO.println s!"Number of results: {result.size}"
-  return result
-  -- return tokensWithScores.filterMap fun ((ts, s) : Array String × Float) => (tokenizer.detokenize ts, s)
-
-  -- IMPT:
-  -- try
-  --   -- let tokensWithScores := FFI.generate model.name inputTokens targetPrefixTokens numReturnSequences beamSize minLength maxLength lengthPenalty patience temperature
-
-  --   IO.println "About to call FFI.generate"
-  --   let tokensWithScores := FFI.generate model.name inputTokens targetPrefixTokens numReturnSequences beamSize minLength maxLength lengthPenalty patience temperature
-  --   IO.println "FFI call completed successfully"
-
-  --   IO.println s!"Size: {tokensWithScores.size}"
-
-  --   -- TODO: use original lines below
-  --   let result := tokensWithScores.map fun (tokens, score) => (tokens.foldl (· ++ " " ++ ·) "", score)
-  --   IO.println "Result mapped successfully"
-
-  --   IO.println s!"Number of results: {result.size}"
-  --   return result
-
-  --   -- return #[]
-  -- catch e =>
-  --   IO.println s!"Exception caught: {e}"
-  --   return #[]
-
-  -- IO.println s!"Generate completed with tokensWithScores size: ${tokensWithScores.size}"
-
-  -- if tokensWithScores.isEmpty then
-  --   IO.println "No tokens available"
-  -- else
-  --   IO.println "Tokens are available"
-
-  -- match tokensWithScores with
-  -- | #[] => IO.println "The array is empty or not initialized properly."
-  -- | _ => IO.println s!"Received tokens with scores"
-
-  -- tokensWithScores.forM fun (tokens, score) => do
-  --   let tokensStr := joinStrings tokens -- Join all tokens into a single string
-  --   IO.println s!"Tokens: {tokensStr}, Score: {score}"
-
-  -- IO.println tokensWithScores
-  -- return tokensWithScores.filterMap fun ((ts, s) : Array String × Float) => (tokenizer.detokenize ts, s)
-
-  -- return #[]
-
+  return tokensWithScores.filterMap fun ((ts, s) : Array String × Float) => (tokenizer.detokenize ts, s)
 
 instance : TextToText NativeGenerator where
   generate := NativeGenerator.generate

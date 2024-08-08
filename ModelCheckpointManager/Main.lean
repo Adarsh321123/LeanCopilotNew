@@ -7,12 +7,10 @@ import LeanCopilot.Models.Builtin
 open Lean
 open LeanCopilot
 
--- TODO: change?
 def configPathEncoderUrl : IO System.FilePath := do
   let home ← IO.getEnv "HOME"
   pure $ (home.getD "/") / ".lean_copilot_current_retriever"
 
--- TODO: change?
 def configPathEmbUrl : IO System.FilePath := do
   let home ← IO.getEnv "HOME"
   pure $ (home.getD "/") / ".lean_copilot_current_emb"
