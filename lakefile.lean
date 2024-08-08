@@ -123,7 +123,7 @@ def afterReleaseSync {α : Type} (pkg : Package) (build : SpawnM (Job α)) : Fet
     build
 
 
-def afterReleaseAsync {α : Type} (pkg : Package) (build : BuildM α) : FetchM (Job α) := do
+def afterReleaseAsync {α : Type} (pkg : Package) (build : JobM α) : FetchM (Job α) := do
   if pkg.preferReleaseBuild ∧ pkg.name ≠ (← getRootPackage).name then
     (← pkg.release.fetch).bindSync fun _ _ => build
   else
@@ -280,7 +280,7 @@ def buildCpp (pkg : Package) (path : FilePath) (dep : BuildJob FilePath) : Spawn
   let flags := #["-fPIC", "-std=c++17", optLevel]
   let args := flags ++ #["-I", (← getLeanIncludeDir).toString, "-I", (pkg.buildDir / "include").toString]
   let oFile := pkg.buildDir / (path.withExtension "o")
-  let srcJob ← inputFile <| pkg.dir / path
+  let srcJob ← inputTextFile <| pkg.dir / path
   buildFileAfterDepList oFile [srcJob, dep] (extraDepTrace := computeHash flags) fun deps =>
     compileO oFile deps[0]! args "c++"
 
@@ -297,8 +297,8 @@ extern_lib libleanffi pkg := do
   buildStaticLib (pkg.nativeLibDir / name) #[ct2O]
 
 
-require batteries from git "https://github.com/leanprover-community/batteries.git" @ "main"
-require aesop from git "https://github.com/leanprover-community/aesop" @ "master"
+require batteries from git "https://github.com/leanprover-community/batteries.git" @ "2ead90d24b4fac3a05c9c4294daa39bd8686fb98" -- Lean v4.10.0-rc1
+require aesop from git "https://github.com/leanprover-community/aesop" @ "a64fe24aa94e21404940e9217363a9a1ed9a33a6" -- Lean v4.10.0-rc1
 
 meta if get_config? env = some "dev" then -- dev is so not everyone has to build it
-require «doc-gen4» from git "https://github.com/leanprover/doc-gen4" @ "main"
+require «doc-gen4» from git "https://github.com/leanprover/doc-gen4" @ "c369436d21c583a60da62d4513c7b9ea08389074" -- Lean v4.10.0-rc1

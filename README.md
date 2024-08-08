@@ -5,7 +5,7 @@ Lean Copilot allows large language models (LLMs) to be used in Lean for proof au
 
 
 
-https://github.com/lean-dojo/LeanCopilot/assets/5431913/7742545f-e194-45fa-b744-381bb3441840
+https://github.com/lean-dojo/LeanCopilot/assets/114432581/ee0f56f8-849e-4099-9284-d8092cbd22a3
 
 
 
@@ -58,6 +58,13 @@ require LeanCopilot from git "https://github.com/lean-dojo/LeanCopilot.git" @ "L
 `LEAN_COPILOT_VERSION` depends on your lean-toolchain:
 | lean-toolchain | Recommended Lean Copilot version |
 | -------------- | -------------------------------- |
+| `v4.10.0-rc1`  | `v1.4.1`                         |
+| `v4.9.0`       | `v1.4.0`                         |
+| `v4.9.0-rc3`   | `v1.3.3`                         |
+| `v4.9.0-rc2`   | `v1.3.2`                         |
+| `v4.9.0-rc1`   | `v1.3.1`                         |
+| `v4.8.0`       | `v1.3.0`                         |
+| `v4.8.0-rc2`   | `v1.2.2`                         |
 | `v4.8.0-rc1`   | `v1.2.1`                         |
 | `v4.7.0`       | `v1.2.0`                         |
 | `v4.7.0-rc2`   | `v1.1.2`                         |
@@ -89,7 +96,7 @@ You can provide a prefix (e.g., `simp`) to constrain the generated tactics:
 
 The tactic `search_proof` combines LLM-generated tactics with [aesop](https://github.com/leanprover-community/aesop) to search for multi-tactic proofs. When a proof is found, you can click on it to insert it into the editor. 
 
-<img width="824" alt="search_proof" src="https://github.com/lean-dojo/LeanCopilot/assets/5431913/0748b9b1-8eb0-4437-bcbf-12e4ea939943">
+<img width="824" alt="search_proof" src="https://github.com/lean-dojo/LeanCopilot/assets/114432581/26381fca-da4e-43d9-84b5-7e27b0612626">
 
 
 
@@ -97,7 +104,7 @@ The tactic `search_proof` combines LLM-generated tactics with [aesop](https://gi
 
 The `select_premises` tactic retrieves a list of potentially useful premises. Currently, it uses the retriever in [LeanDojo](https://leandojo.org/) to select premises from a fixed snapshot of Lean and [mathlib4](https://github.com/leanprover-community/mathlib4/tree/3ce43c18f614b76e161f911b75a3e1ef641620ff).
 
-![select_premises](https://github.com/lean-dojo/LeanCopilot/assets/5431913/1ab1cc9b-39ac-4f40-b2c9-40d57e235d3e)
+![select_premises](https://github.com/lean-dojo/LeanCopilot/assets/114432581/2817663c-ba98-4a47-9ae9-5b8680b6265a)
 
 
 
@@ -116,7 +123,7 @@ You can also run the inference of any LLMs in Lean, which can be used to build c
 ### Tactic APIs
 
 * Examples in [TacticSuggestion.lean](LeanCopilotTests/TacticSuggestion.lean) showcase how to configure `suggest_tactics`, e.g., to use different models or generate different numbers of tactics.
-* Examples in [ProofSearch.lean](LeanCopilotTests/ProofSearch.lean) showcase how to configure the proof search using options provided by [aesop](https://github.com/leanprover-community/aesop).
+* Examples in [ProofSearch.lean](LeanCopilotTests/ProofSearch.lean) showcase how to configure `search_proof` using options provided by [aesop](https://github.com/leanprover-community/aesop).
 * Examples in [PremiseSelection.lean](LeanCopilotTests/PremiseSelection.lean) showcase how to set the number of retrieved premises for `select_premises`.
 
 
@@ -192,6 +199,6 @@ If you find our work useful, please consider citing our paper:
   title={Towards Large Language Models as Copilots for Theorem Proving in {Lean}},
   author={Peiyang Song and Kaiyu Yang and Anima Anandkumar},
   year={2024},
-  journal = {arXiv preprint arXiv: Arxiv-2404.12534}
+  journal={arXiv preprint arXiv: Arxiv-2404.12534}
 }
 ```
